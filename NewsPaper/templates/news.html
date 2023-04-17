@@ -12,7 +12,7 @@
 
 <!-- В контенте на странице мы выводим все новости -->
 {% block content %}
-<h1>Все новости ({{ News|length }})</h1>
+<h1>Все новости ({{ page_obj.paginator.count }})</h1>
     <!-- Вот так используем новый тег-->
     <h3>{% current_time '%b %d %Y' %}</h3>
     <!-- Если в переменной next_news будет None, то выведется указанный в фильтре текст -->
@@ -51,4 +51,28 @@
         <!-- Если новостей нет, говорим, что новостей нет ;) -->
        <h2>Новостей нет!</h2>
     {% endif %}
+
+    {# Добавляем пагинацию на страницу #}
+
+   {# Информация о предыдущих страницах #}
+   {% if page_obj.has_previous %}
+       <a href="?page=1">1</a>
+       {% if page_obj.previous_page_number != 1 %}
+           ...
+           <a href="?page={{ page_obj.previous_page_number }}">{{ page_obj.previous_page_number }}</a>
+       {% endif %}
+   {% endif %}
+
+   {# Информация о текущей странице #}
+   {{ page_obj.number }}
+
+   {# Информация о следующих страницах #}
+   {% if page_obj.has_next %}
+       <a href="?page={{ page_obj.next_page_number }}">{{ page_obj.next_page_number }}</a>
+       {% if paginator.num_pages != page_obj.next_page_number %}
+           ...
+           <a href="?page={{ page_obj.paginator.num_pages }}">{{ page_obj.paginator.num_pages }}</a>
+       {% endif %}
+   {% endif %}
+
 {% endblock content %}

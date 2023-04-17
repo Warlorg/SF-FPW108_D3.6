@@ -1,0 +1,48 @@
+<!--  наследуемся от шаблона default.html, который мы создавали для flatpages -->
+{% extends 'flatpages/default.html' %}
+{% load custom_filters %}
+{% load custom_tags %}
+
+{% block title %}
+Поиск по сайту
+{% endblock title %}
+
+{% block content %}
+<h1>Поиск по новостям ({{ news_search|length }})</h1>
+
+{# Добавляем форму, объединяющую набор полей, которые будут отправляться в запросе #}
+    <form action="" method="get">
+       {# Переменная, которую мы передали через контекст, может сгенерировать нам форму с полями #}
+       {{ filterset.form.as_p }}
+       {# Добавим кнопку отправки данных формы #}
+       <input type="submit" value="Найти" />
+   </form>
+
+    <h3>{% current_time '%b %d %Y' %}</h3>
+    <hr>
+    {% if news_search %}
+        <table>
+           <tr>
+               <td>Автор</td>
+               <td>
+                   Название статьи/новости
+               </td>
+               <td>Категория</td>
+               <td>
+                   Дата публикации
+               </td>
+           </tr>
+           {% for news_id in news_search %}
+           <tr>
+               <td>{{ news_id.author}}</td>
+               <td>{{ news_id.title|truncatewords:2|censor }}</td>
+               <td>{% for cat in news_id.postCategory.all %} {{ cat.name }} {% endfor %}</td>
+               <td>{{ news_id.dateCreation|date:'d M Y' }}</td>
+           </tr>
+           {% endfor %}
+
+       </table>
+    {% else %}
+        <h2>Новость не найдена!</h2>
+    {% endif %}
+{% endblock content%}
