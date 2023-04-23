@@ -11,6 +11,9 @@
 <form action="" method="post">
     {% csrf_token %}
     {{ form.as_p }}
+    {# Теперь будем проверять не request.user.is_authenticated, а конкретные права #}
+    {% if perms.news.add_post %}
     <input type="submit" value="Записать">
+    {% endif %}
 </form>
 {% endblock content %}

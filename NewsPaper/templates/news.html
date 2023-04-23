@@ -18,6 +18,12 @@
     <!-- Если в переменной next_news будет None, то выведется указанный в фильтре текст -->
     <h3> {{ next_news|default_if_none:"Следите за обновлением ленты новостей!" }} </h3>
     <hr>
+    {# Теперь будем проверять не request.user.is_authenticated, а конкретные права #}
+    {% if perms.news.add_post %}
+    <a href="{% url 'post_create' %}">Добавить новость или статью</a>
+    {% endif %}
+    <hr>
+
     <!-- Выводим новости, только если они есть с помощью тега if -->
     {% if News %}
         <table> <!-- Начинаем описывать таблицу -->
@@ -28,7 +34,14 @@
                <td> <!-- Добавляем ещё одну ячейку в строку и так далее -->
                    Дата публикации
                </td>
-               <td>Содержание</td>
+               <td>
+                   Содержание
+               </td>
+               {# Условие получается составным. #}
+               {% if perms.news.change_post or perms.news.delete_post %}
+               <td>Действия</td>
+               {% endif %}
+
            </tr> <!-- Не забываем закрыть HTML-тег строки -->
             <!-- Для каждой новости будете генерироваться новая строчка,
            т.е. новый HTML код, который указан в теле цикла.
@@ -40,11 +53,27 @@
                 от переменных в Python. Здесь также можно получать доступ к
                 полям объекта модели. Например, здесь мы выводим имя,
                 в следующем столбце описание, и т.д.  -->
-               <td>{{ news_id.title|truncatewords:2|censor }}</td>
+               <td>
+                   <a href="{% url 'news_detail' pk=news_id.id %}">{{ news_id.title|truncatewords:2|censor }}</a>
+               </td>
                <td>{{ news_id.dateCreation|date:'d M Y' }}</td>
                <td>{{ news_id.text|truncatechars:20|censor }}</td>
+
+               <td>
+                   {# А здесь доступ для каждой ссылки теперь будем проверять отдельно #}
+                   {% if perms.news.change_post and news_id.author == request.user.author %}
+                   <a href="{% url 'post_update' pk=news_id.id %}">
+                       <h6 style="..."><button>Изменить</button></h6>
+                    </a>
+                   {% endif %}
+                   {% if perms.news.delete_post and news_id.author == request.user.author %}
+                   <a href="{% url 'post_delete' news_id.id %}">
+                       <h6 style="..."><button>Удалить</button></h6>
+                    </a>
+                    {% endif %}
+                </td>
            </tr>
-           {% endfor %}
+            {% endfor %}
 
        </table> <!-- ... и таблицы -->
     {% else %}
@@ -54,14 +83,14 @@
 
     {# Добавляем пагинацию на страницу #}
 
-   {# Информация о предыдущих страницах #}
-   {% if page_obj.has_previous %}
-       <a href="?page=1">1</a>
-       {% if page_obj.previous_page_number != 1 %}
+    {# Информация о предыдущих страницах #}
+    {% if page_obj.has_previous %}
+        <a href="?page=1">1</a>
+        {% if page_obj.previous_page_number != 1 %}
            ...
            <a href="?page={{ page_obj.previous_page_number }}">{{ page_obj.previous_page_number }}</a>
-       {% endif %}
-   {% endif %}
+        {% endif %}
+    {% endif %}
 
    {# Информация о текущей странице #}
    {{ page_obj.number }}

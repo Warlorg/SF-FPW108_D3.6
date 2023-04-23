@@ -1,10 +1,8 @@
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from datetime import datetime
-
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, UpdateView, DeleteView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from .models import *
 from .filters import PostFilter
 from .forms import PostForm
@@ -53,6 +51,7 @@ class NewsSearch(ListView):
     template_name = 'search.html'
     context_object_name = 'news_search'
     ordering = '-dateCreation'
+    paginate_by = 5
 
     # Переопределяем функцию получения списка новостей
     def get_queryset(self):
@@ -75,26 +74,37 @@ class NewsSearch(ListView):
         return context
 
 
-def create_Post(request):
-    form = PostForm()
-    if request.method == 'POST':
-        form = PostForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return HttpResponseRedirect('/news/')
+# Добавляем новое представление для создания публикаций.
+class PostCreate(PermissionRequiredMixin, LoginRequiredMixin, CreateView):
+    permission_required = ('news.add_post',)
+    raise_exception = True
+    # Указываем разработанную форму
+    form_class = PostForm
+    # модель публикаций
+    model = Post
+    # и новый шаблон, в котором используется форма.
+    template_name = 'news_edit.html'
 
-    return render(request, 'news_edit.html', {'form': form})
 
-
-# Добавляем представление для изменения товара.
-class PostUpdate(UpdateView):
+# Добавляем представление для изменения публикаций.
+class PostUpdate(PermissionRequiredMixin, UpdateView):
+    permission_required = ('news.change_post',)
     form_class = PostForm
     model = Post
     template_name = 'news_edit.html'
 
+    def form_valid(self, form):
+        form.instance.author = self.request.user.author
+        return super().form_valid(form)
+
 
 # Представление удаляющее товар.
-class PostDelete(DeleteView):
+class PostDelete(PermissionRequiredMixin, DeleteView):
+    permission_required = ('news.delete_post',)
     model = Post
     template_name = 'news_delete.html'
     success_url = reverse_lazy('news_list')
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user.author
+        return super().form_valid(form)
