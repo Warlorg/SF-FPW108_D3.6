@@ -10,6 +10,6 @@
 {% block content %}
     <h1>Все авторы</h1>
     {% for author in Authors %}
-    {{ author.authorUser }}
+    {{ author.authorUser.first_name }}
     {% endfor %}
 {% endblock content %}

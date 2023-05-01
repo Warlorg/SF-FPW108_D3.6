@@ -12,7 +12,7 @@
 
 <!-- В контенте на странице мы выводим все новости -->
 {% block content %}
-<h1>Все новости ({{ page_obj.paginator.count }})</h1>
+<h1 class="text-center">Все новости <span class="text-muted fs-6 fw-normal">({{ page_obj.paginator.count }})</span></h1>
     <!-- Вот так используем новый тег-->
     <h3>{% current_time '%b %d %Y' %}</h3>
     <!-- Если в переменной next_news будет None, то выведется указанный в фильтре текст -->
@@ -37,6 +37,7 @@
                <td>
                    Содержание
                </td>
+               <td>Категория</td>
                {# Условие получается составным. #}
                {% if perms.news.change_post or perms.news.delete_post %}
                <td>Действия</td>
@@ -58,6 +59,10 @@
                </td>
                <td>{{ news_id.dateCreation|date:'d M Y' }}</td>
                <td>{{ news_id.text|truncatechars:20|censor }}</td>
+               <td>{% for category in news_id.postCategory.all %}
+                   <a href="{% url 'categories' category.id %}">{{ category }}</a>
+                   {% endfor %}
+               </td>
 
                <td>
                    {# А здесь доступ для каждой ссылки теперь будем проверять отдельно #}
@@ -103,5 +108,15 @@
            <a href="?page={{ page_obj.paginator.num_pages }}">{{ page_obj.paginator.num_pages }}</a>
        {% endif %}
    {% endif %}
+    <hr>
+
+    {% if not is_author %}
+    <button>
+        <a class="nav-link" href="{% url 'account_upgrade' %}">
+            <h4><strong>Станьте автором!</strong></h4>
+        </a>
+    </button>
+{% endif %}
+
 
 {% endblock content %}

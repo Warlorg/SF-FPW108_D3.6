@@ -1,0 +1,103 @@
+<!--  наследуемся от шаблона default.html, который мы создавали для flatpages -->
+{% extends 'flatpages/default.html' %}
+{% load custom_filters %}
+{% load custom_tags %}
+
+{% block title %}
+{{ category }}
+{% endblock title %}
+
+<!-- В контенте на странице мы выводим все новости -->
+{% block content %}
+<h1 class="text-center">Все новости категории "{{ category }}"
+    <span class="text-muted fs-6 fw-normal">Всего: ({{ page_obj.paginator.count }})</span></h1>
+    {% if is_not_subscriber %}
+        <p class="text-center"><a href="{% url 'subscribe' category.id %}" class="btn btn-secondary btn-sm">Подписаться</a></p>
+    {% else %}
+        <p class="text-center"><a href="{% url 'unsubscribe' category.id %}" class="btn btn-secondary btn-sm">Отписаться</a></p>
+    {% endif %}
+
+    <h3>{% current_time '%b %d %Y' %}</h3>
+
+    <hr>
+
+    <!-- Выводим новости, только если они есть с помощью тега if -->
+    {% if category_news_list %}
+        <table> <!-- Начинаем описывать таблицу -->
+           <tr> <!-- Добавляем строку -->
+               <td> <!-- Добавляем ячейку в строку -->
+                   Название статьи/новости
+               </td>
+               <td> <!-- Добавляем ещё одну ячейку в строку и так далее -->
+                   Дата публикации
+               </td>
+               <td>
+                   Содержание
+               </td>
+               <td>
+                   Категория
+               </td>
+               {# Условие получается составным. #}
+               {% if perms.news.change_post or perms.news.delete_post %}
+               <td>Действия</td>
+               {% endif %}
+
+           </tr>
+           {% for news_id in category_news_list %}
+           <tr>
+               <td>
+                   <a href="{% url 'news_detail' pk=news_id.id %}">{{ news_id.title|truncatewords:2|censor }}</a>
+               </td>
+               <td>{{ news_id.dateCreation|date:'d M Y' }}</td>
+               <td>{{ news_id.text|truncatechars:20|censor }}</td>
+               <td>{% for category in news_id.postCategory.all %}
+                    <a href="{% url 'categories' category.id %}">{{ category }}</a>
+                   {% endfor %}
+               </td>
+
+               <td>
+                   {# А здесь доступ для каждой ссылки теперь будем проверять отдельно #}
+                   {% if perms.news.change_post and news_id.author == request.user.author %}
+                   <a href="{% url 'post_update' pk=news_id.id %}">
+                       <h6 style="..."><button>Изменить</button></h6>
+                    </a>
+                   {% endif %}
+                   {% if perms.news.delete_post and news_id.author == request.user.author %}
+                   <a href="{% url 'post_delete' news_id.id %}">
+                       <h6 style="..."><button>Удалить</button></h6>
+                    </a>
+                    {% endif %}
+                </td>
+           </tr>
+            {% endfor %}
+
+       </table> <!-- ... и таблицы -->
+    {% else %}
+        <!-- Если новостей нет, говорим, что новостей нет ;) -->
+       <h2>Новостей нет!</h2>
+    {% endif %}
+
+    {# Добавляем пагинацию на страницу #}
+
+    {# Информация о предыдущих страницах #}
+    {% if page_obj.has_previous %}
+        <a href="?page=1">1</a>
+        {% if page_obj.previous_page_number != 1 %}
+           ...
+           <a href="?page={{ page_obj.previous_page_number }}">{{ page_obj.previous_page_number }}</a>
+        {% endif %}
+    {% endif %}
+
+   {# Информация о текущей странице #}
+   {{ page_obj.number }}
+
+   {# Информация о следующих страницах #}
+   {% if page_obj.has_next %}
+       <a href="?page={{ page_obj.next_page_number }}">{{ page_obj.next_page_number }}</a>
+       {% if paginator.num_pages != page_obj.next_page_number %}
+           ...
+           <a href="?page={{ page_obj.paginator.num_pages }}">{{ page_obj.paginator.num_pages }}</a>
+       {% endif %}
+   {% endif %}
+
+{% endblock content %}

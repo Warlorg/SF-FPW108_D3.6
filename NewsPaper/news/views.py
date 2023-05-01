@@ -1,11 +1,13 @@
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin, LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from datetime import datetime
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from .models import *
 from .filters import PostFilter
 from .forms import PostForm
+from django.shortcuts import get_object_or_404, render
+from django.views.decorators.csrf import csrf_protect
 
 
 class AuthorsList(ListView):
@@ -37,6 +39,7 @@ class NewsList(ListView):
         # Добавим ещё одну пустую переменную,
         # чтобы на её примере рассмотреть работу ещё одного фильтра.
         context['next_news'] = None
+        context['is_author'] = self.request.user.groups.filter(name='authors').exists()
         return context
 
 
@@ -75,7 +78,7 @@ class NewsSearch(ListView):
 
 
 # Добавляем новое представление для создания публикаций.
-class PostCreate(PermissionRequiredMixin, LoginRequiredMixin, CreateView):
+class PostCreate(PermissionRequiredMixin, CreateView):
     permission_required = ('news.add_post',)
     raise_exception = True
     # Указываем разработанную форму
@@ -85,6 +88,10 @@ class PostCreate(PermissionRequiredMixin, LoginRequiredMixin, CreateView):
     # и новый шаблон, в котором используется форма.
     template_name = 'news_edit.html'
 
+    def form_valid(self, form):
+        form.instance.author = self.request.user.author
+        return super().form_valid(form)
+
 
 # Добавляем представление для изменения публикаций.
 class PostUpdate(PermissionRequiredMixin, UpdateView):
@@ -93,18 +100,53 @@ class PostUpdate(PermissionRequiredMixin, UpdateView):
     model = Post
     template_name = 'news_edit.html'
 
-    def form_valid(self, form):
-        form.instance.author = self.request.user.author
-        return super().form_valid(form)
 
-
-# Представление удаляющее товар.
+# Представление удаляющее публикацию.
 class PostDelete(PermissionRequiredMixin, DeleteView):
     permission_required = ('news.delete_post',)
     model = Post
     template_name = 'news_delete.html'
     success_url = reverse_lazy('news_list')
 
-    def form_valid(self, form):
-        form.instance.author = self.request.user.author
-        return super().form_valid(form)
+
+# Представление списка категорий для подписки
+class CategoryList(ListView):
+    model = Post
+    template_name = 'categories.html'
+    context_object_name = 'category_news_list'
+    paginate_by = 10
+
+    def get_queryset(self):
+        self.category = get_object_or_404(Category, id=self.kwargs['pk'])
+        queryset = Post.objects.filter(postCategory=self.category).order_by('-dateCreation')
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_not_subscriber'] = self.request.user not in self.category.subscribers.all()
+        context['category'] = self.category
+        return context
+
+
+@login_required
+@csrf_protect
+def subscribe(request, pk):
+    user = request.user
+    category = Category.objects.get(id=pk)
+    category.subscribers.add(user)
+
+    message = "Вы успешно подписались на рассылку новостей категории"
+    return render(request, 'subscriptions/subscribe.html', {'category': category, 'message': message})
+
+
+@login_required
+@csrf_protect
+def unsubscribe(request, pk):
+    user = request.user
+    category = Category.objects.get(id=pk)
+
+    if category.subscribers.filter(id=user.id).exists():
+        category.subscribers.remove(user)
+
+    message = "Вы успешно отписались от рассылки новостей категории"
+    return render(request, 'subscriptions/unsubscribe.html', {'category': category, 'message': message})
