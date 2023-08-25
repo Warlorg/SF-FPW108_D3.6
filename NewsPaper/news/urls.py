@@ -1,16 +1,17 @@
 from django.urls import path
 # Импортируем созданное представление
 from .views import *
+from django.views.decorators.cache import cache_page  # импортируем декоратор для кэширования отдельного представления
 
 
 urlpatterns = [
    # Т.к. наше объявленное представление является классом,
    # а Django ожидает функцию, нам надо представить этот класс в виде view.
    # Для этого вызываем метод as_view.
-   path('', NewsList.as_view(), name='news_list'),
+   path('', cache_page(60)(NewsList.as_view()), name='news_list'),
    # pk — это первичный ключ новости, который будет выводиться у нас в шаблон
    # int — указывает на то, что принимаются только целочисленные значения
-   path('authors/', AuthorsList.as_view(), name='authors'),
+   path('authors/', cache_page(60*5)(AuthorsList.as_view()), name='authors'),
    path('<int:pk>/', News.as_view(), name='news_detail'),
    path('search/', NewsSearch.as_view(), name='news_search'),
    path('create/', PostCreate.as_view(), name='post_create'),

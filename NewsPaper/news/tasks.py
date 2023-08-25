@@ -32,6 +32,7 @@ def weekly_notifications():
 	msg.attach_alternative(html_content, 'text/html')
 	msg.send()
 
+
 @shared_task
 def new_post_notification(instance_id):
 	instance = Post.objects.get(pk=instance_id)

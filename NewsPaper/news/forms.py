@@ -4,19 +4,19 @@ from django.core.exceptions import ValidationError
 
 
 class PostForm(forms.ModelForm):
-	class Meta:
-		model = Post
-		fields = [
-			'categoryType',
-			'postCategory',
-			'title',
-			'text',
-		]
+    class Meta:
+        model = Post
+        fields = [
+            'categoryType',
+            'postCategory',
+            'title',
+            'text',
+        ]
 
-	def clean_title(self):
-		title = self.cleaned_data["title"]
-		if title[0].islower():
-			raise ValidationError(
-				"Название должно начинаться с заглавной буквы!"
-			)
-		return title
+    def clean_title(self):
+        title = self.cleaned_data["title"]
+        if title[0].islower():
+            raise ValidationError(
+                "Название должно начинаться с заглавной буквы!"
+            )
+        return title

@@ -2,6 +2,7 @@ from django_filters import FilterSet, DateTimeFilter, CharFilter
 from django.forms import DateTimeInput
 from .models import Post
 
+
 # Создаем свой набор фильтров для модели Post.
 # FilterSet, который мы наследуем,
 # должен чем-то напомнить Django дженерики.
@@ -21,8 +22,8 @@ class PostFilter(FilterSet):
         lookup_expr='gt',
         label='По дате опубликования:',
         widget=DateTimeInput(
-        format='%Y-%m-%dT%H:%M',
-        attrs={'type': 'datetime-local'},
+            format='%Y-%m-%dT%H:%M',
+            attrs={'type': 'datetime-local'},
         ),
     )
 

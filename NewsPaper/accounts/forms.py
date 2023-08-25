@@ -5,6 +5,7 @@ from allauth.account.forms import SignupForm
 from django.core.mail import EmailMultiAlternatives
 from django.core.mail import mail_admins
 
+
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(label="Email")
     first_name = forms.CharField(label="Имя")

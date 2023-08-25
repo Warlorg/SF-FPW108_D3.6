@@ -10,13 +10,18 @@
 
 <!-- В контенте на странице мы выводим все новости -->
 {% block content %}
-    {% if News_id %}
-        <h5>
-            Заголовок: <i>{{ News_id.title|truncatewords:2|censor }}</i>&emsp;&emsp;
-            Дата публикации: {{ News_id.dateCreation|date:'d M Y' }}
-        </h5>
-        <h5>Содержание: {{ News_id.text|censor }}</h5>
-    {% else %}
-        <h2>Новость не найдена!</h2>
-    {% endif %}
+{% load cache %} <!-- Загружаем кэширование -->
+        {% cache 60 news %} <!-- Кэшируем отдельный блок на 60 секунд -->
+            {% block news %}
+                {% if News_id %}
+                    <h5>
+                        Заголовок: <i>{{ News_id.title|truncatewords:2|censor }}</i>&emsp;&emsp;
+                        Дата публикации: {{ News_id.dateCreation|date:'d M Y' }}
+                    </h5>
+                    <h5>Содержание: {{ News_id.text|censor }}</h5>
+                {% else %}
+                    <h2>Новость не найдена!</h2>
+                {% endif %}
+            {% endblock news %}
+        {% endcache %}
 {% endblock content %}

@@ -8,6 +8,7 @@ from .filters import PostFilter
 from .forms import PostForm
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_protect
+from django.core.cache import cache  # импортируем наш кэш
 
 
 class AuthorsList(ListView):
@@ -47,6 +48,18 @@ class News(DetailView):
     model = Post
     template_name = 'news_id.html'
     context_object_name = 'News_id'
+
+    def get_object(self, *args, **kwargs):  # переопределяем метод получения объекта, как ни странно
+        obj = cache.get(f'news_id-{self.kwargs["pk"]}',
+                        None)  # кэш очень похож на словарь, и метод get действует так же.
+        # Он забирает значение по ключу, если его нет, то забирает None.
+        # Если объекта нет в кэше, то получаем его и записываем в кэш
+        if not obj:
+            obj = super().get_object(queryset=self.queryset)
+            cache.set(f'news_id-{self.kwargs["pk"]}', obj)
+
+        return obj
+
 
 
 class NewsSearch(ListView):
